@@ -52,7 +52,7 @@ public class PdfService {
 
             // Step 2 — Chunk the text (500 chars, 50 overlap)
             List<String> chunks =
-                    chunkText(fullText, 500, 50);
+                    chunkText(fullText, 2000, 200);
 
             // Step 3 — Embed and save each chunk
             for (String chunkContent : chunks) {

@@ -27,6 +27,11 @@ public class PdfController {
             Authentication authentication) {
         System.out.println("PDF UPLOAD ENDPOINT HIT");
 
+        System.out.println("FILE NAME = " + file.getOriginalFilename());
+        System.out.println("FILE SIZE = " + file.getSize());
+
+
+
         try {
             if (file == null || file.isEmpty()) {
                 return ResponseEntity
