@@ -120,6 +120,17 @@ public class RagService {
         }
     }
 
+
+    private static class ScoredChunk {
+        DocumentChunk chunk;
+        double score;
+
+        ScoredChunk(DocumentChunk chunk, double score) {
+            this.chunk = chunk;
+            this.score = score;
+        }
+    }
+
     // Parse "[0.1,0.2,...]" string to double array
     private double[] parseEmbedding(String embedding) {
         String cleaned = embedding
