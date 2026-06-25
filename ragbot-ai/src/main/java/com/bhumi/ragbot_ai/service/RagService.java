@@ -36,18 +36,30 @@ public class RagService {
             List<DocumentChunk> allChunks =
                     chunkRepository.findByUserId(user.getId());
 
-            // No PDF uploaded — answer normally
-            if (allChunks.isEmpty()) return question;
+            System.out.println("\n========================================");
+            System.out.println("RAG DEBUG START");
+            System.out.println("========================================");
+
+            System.out.println("QUESTION = " + question);
+            System.out.println("TOTAL CHUNKS FOUND = " + allChunks.size());
+
+            // No PDF uploaded
+            if (allChunks.isEmpty()) {
+                System.out.println("NO CHUNKS FOUND");
+                return question;
+            }
 
             String questionEmbedding =
                     embeddingService.getEmbedding(question);
 
-            if (questionEmbedding == null) return question;
+            if (questionEmbedding == null) {
+                System.out.println("QUESTION EMBEDDING FAILED");
+                return question;
+            }
 
             double[] questionVector =
                     parseEmbedding(questionEmbedding);
 
-            // Sort chunks by cosine similarity — top 5
             List<DocumentChunk> topChunks = allChunks.stream()
                     .sorted(Comparator.comparingDouble(chunk ->
                             -cosineSimilarity(
@@ -58,22 +70,51 @@ public class RagService {
                     .limit(5)
                     .toList();
 
+            System.out.println("TOP CHUNKS SELECTED = "
+                    + topChunks.size());
+
             StringBuilder context = new StringBuilder();
+
+            int chunkNo = 1;
+
             for (DocumentChunk chunk : topChunks) {
+
+                System.out.println("\n----------- CHUNK "
+                        + chunkNo + " -----------");
+
+                System.out.println(chunk.getContent());
+
+                System.out.println("------------------------------");
+
                 context.append(chunk.getContent());
                 context.append("\n---\n");
+
+                chunkNo++;
             }
 
-            return """
+            String finalPrompt = """
                 You are a helpful AI assistant.
                 Use the following context from the user's documents to answer the question.
                 If the answer is not in the context, answer from your own knowledge.
-                
+
                 CONTEXT:
                 """ + context + """
-                
-                QUESTION:
+
+                USER QUESTION:
                 """ + question;
+
+            System.out.println("\n========================================");
+            System.out.println("PROMPT LENGTH = "
+                    + finalPrompt.length());
+            System.out.println("========================================");
+
+            System.out.println(finalPrompt);
+
+            System.out.println("\n========================================");
+            System.out.println("RAG DEBUG END");
+            System.out.println("========================================\n");
+
+            return finalPrompt;
 
         } catch (Exception e) {
             e.printStackTrace();
