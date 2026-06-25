@@ -42,17 +42,23 @@ public class PdfService {
             PDDocument document =
                     org.apache.pdfbox.Loader.loadPDF(
                             file.getBytes());
+            System.out.println("STEP 1 - Loading PDF");
+
             PDFTextStripper stripper =
                     new PDFTextStripper();
 
             String fullText =
                     stripper.getText(document);
 
+            System.out.println("TEXT LENGTH = " + fullText.length());
+
             document.close();
 
             // Step 2 — Chunk the text (500 chars, 50 overlap)
             List<String> chunks =
-                    chunkText(fullText, 2000, 200);
+                    chunkText(fullText, 3000, 300);
+
+            System.out.println("TOTAL CHUNKS = " + chunks.size());
 
             // Step 3 — Embed and save each chunk
             for (String chunkContent : chunks) {
