@@ -35,6 +35,12 @@ public class OpenRouterService {
             String imageBase64,
             String mediaType) {
 
+        System.out.println("===== GROQ DEBUG =====");
+        System.out.println("API Key null? " + (apiKey == null));
+        System.out.println("API Key starts with: " +
+                (apiKey == null ? "NULL" : apiKey.substring(0, Math.min(6, apiKey.length()))));
+        System.out.println("Question: " + question);
+
         try {
             String url = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -81,6 +87,7 @@ public class OpenRouterService {
             return message.get("content").toString();
 
         } catch (Exception e) {
+            System.out.println("===== GROQ ERROR =====");
             e.printStackTrace();
             return "Error: " + e.getMessage();
         }
