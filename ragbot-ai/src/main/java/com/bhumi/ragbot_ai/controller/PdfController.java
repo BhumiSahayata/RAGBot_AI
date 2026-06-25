@@ -53,6 +53,7 @@ public class PdfController {
                     .status(HttpStatus.PAYLOAD_TOO_LARGE)
                     .body("File too large. Maximum allowed size is 50MB.");
         } catch (Exception e) {
+            System.out.println("UPLOAD ERROR:");
             e.printStackTrace();
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
