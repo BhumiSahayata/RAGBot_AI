@@ -22,8 +22,10 @@ public class PdfController {
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadPdf(
+
             @RequestParam("file") MultipartFile file,
             Authentication authentication) {
+        System.out.println("PDF UPLOAD ENDPOINT HIT");
 
         try {
             if (file == null || file.isEmpty()) {
