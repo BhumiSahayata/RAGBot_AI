@@ -24,5 +24,19 @@ public class PersonalDetailsController {
         );
     }
 
+    @PostMapping
+    public ResponseEntity<?> saveProfile(
+            @RequestBody PersonalDetailsDto dto,
+            Authentication authentication) {
+        try {
+            return ResponseEntity.ok(
+                    personalDetailsService.saveDetails(authentication.getName(), dto)
+            );
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+
 
 }
