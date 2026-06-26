@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pdf")
@@ -22,63 +23,71 @@ public class PdfController {
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadPdf(
-
             @RequestParam("file") MultipartFile file,
+            @RequestParam("category") String category,
             Authentication authentication) {
-        System.out.println("PDF UPLOAD ENDPOINT HIT");
-
-        System.out.println("FILE NAME = " + file.getOriginalFilename());
-        System.out.println("FILE SIZE = " + file.getSize());
-
-
 
         try {
             if (file == null || file.isEmpty()) {
-                return ResponseEntity
-                        .badRequest()
+                return ResponseEntity.badRequest()
                         .body("No file received. Please select a PDF to upload.");
             }
 
+            String fileName = file.getOriginalFilename();
             String contentType = file.getContentType();
-            if (contentType == null || !contentType.equals("application/pdf")) {
-                return ResponseEntity
-                        .badRequest()
+            boolean hasPdfName = fileName != null && fileName.toLowerCase().endsWith(".pdf");
+            boolean hasPdfContentType = "application/pdf".equals(contentType);
+            if (!hasPdfName && !hasPdfContentType) {
+                return ResponseEntity.badRequest()
                         .body("Only PDF files are allowed.");
             }
 
-            String result = pdfService.processPdf(
-                    file,
-                    authentication.getName()
-            );
+            if (file.getSize() > PdfService.MAX_FILE_SIZE_BYTES) {
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body("File too large. Maximum allowed size is 10 MB.");
+            }
+
+            if (category == null || category.isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body("Please select a section (Psychology, Finance, or Spirituality) before uploading.");
+            }
+
+            String result = pdfService.processPdf(file, authentication.getName(), category);
+
+            // Return 400 for validation failures (limit exceeded, etc.)
+            if (result.startsWith("Failed") || result.startsWith("Invalid")
+                    || result.startsWith("Section limit") || result.startsWith("File too large")
+                    || result.startsWith("This PDF") || result.startsWith("Only PDF")) {
+                return ResponseEntity.badRequest().body(result);
+            }
 
             return ResponseEntity.ok(result);
 
         } catch (MaxUploadSizeExceededException e) {
-            return ResponseEntity
-                    .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                    .body("File too large. Maximum allowed size is 50MB.");
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body("File too large. Maximum allowed size is 10 MB.");
         } catch (Exception e) {
-            System.out.println("UPLOAD ERROR:");
             e.printStackTrace();
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Upload failed: " + e.getMessage());
         }
     }
 
     @GetMapping("/files")
-    public ResponseEntity<List<String>> getUploadedFiles(
+    public ResponseEntity<Map<String, List<String>>> getUploadedFiles(
             Authentication authentication) {
 
         try {
-            List<String> files = pdfService.getUploadedFileNames(
-                    authentication.getName());
-            return ResponseEntity.ok(files);
+            String email = authentication.getName();
+            Map<String, List<String>> result = Map.of(
+                    "PSYCHOLOGY",   pdfService.getUploadedFileNamesByCategory(email, "PSYCHOLOGY"),
+                    "FINANCE",      pdfService.getUploadedFileNamesByCategory(email, "FINANCE"),
+                    "SPIRITUALITY", pdfService.getUploadedFileNamesByCategory(email, "SPIRITUALITY")
+            );
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of());
         }
     }
 }

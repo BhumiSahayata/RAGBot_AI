@@ -13,11 +13,15 @@ public class DocumentChunk {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    // Store embedding as comma-separated TEXT — no pgvector needed
+    // Store embedding as comma-separated TEXT; no pgvector needed.
     @Column(columnDefinition = "TEXT")
     private String embedding;
 
     private String fileName;
+
+    // "PSYCHOLOGY" | "FINANCE" | "SPIRITUALITY"
+    @Column(length = 32)
+    private String category;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -35,6 +39,9 @@ public class DocumentChunk {
 
     public String getFileName() { return fileName; }
     public void setFileName(String fileName) { this.fileName = fileName; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
